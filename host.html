@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supplier Label - Host Approval</title>
+    <style>
+      :root {
+        --blue: #2f6fb4;
+        --blue-dark: #1b4d7a;
+        --ink: #111111;
+        --paper: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Franklin Gothic Medium", "Segoe UI", sans-serif;
+        background: #e8edf3;
+        color: var(--ink);
+      }
+
+      .sheet {
+        max-width: 1100px;
+        margin: 24px auto 40px;
+        border: 4px solid var(--blue);
+        background: var(--paper);
+        box-shadow: 0 10px 24px rgba(25, 40, 60, 0.18);
+      }
+
+      .sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        border-bottom: 3px solid var(--blue-dark);
+        background: var(--blue);
+      }
+
+      .title-block {
+        padding: 14px 20px;
+        color: white;
+        letter-spacing: 0.5px;
+      }
+
+      .title-de {
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .title-en {
+        font-size: 14px;
+        text-transform: lowercase;
+      }
+
+      .brand {
+        min-width: 190px;
+        background: white;
+        color: #111;
+        font-size: 26px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-left: 3px solid var(--blue-dark);
+        letter-spacing: 2px;
+      }
+
+      .panel {
+        border: 2px solid var(--blue);
+        background: white;
+        margin: 18px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        padding: 6px 12px;
+        background: var(--blue-dark);
+        color: white;
+        font-size: 15px;
+      }
+
+      .pending-list {
+        padding: 12px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .pending-card {
+        border: 2px solid var(--blue);
+        padding: 10px;
+        background: #f3f8fd;
+      }
+
+      .pending-header {
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .pending-supplier {
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+
+      .pending-date {
+        font-size: 12px;
+        margin-bottom: 6px;
+        color: #304254;
+      }
+
+      .change-list {
+        margin: 0 0 8px;
+        padding-left: 16px;
+        font-size: 12px;
+      }
+
+      .pending-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .pending-actions button {
+        border: 2px solid var(--blue-dark);
+        background: white;
+        padding: 6px 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .pending-actions button:first-child {
+        background: var(--blue);
+        color: white;
+      }
+
+      .status {
+        padding: 0 18px 18px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--blue-dark);
+      }
+
+      @media (max-width: 900px) {
+        .brand {
+          font-size: 24px;
+          min-width: 140px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header class="sheet-header">
+        <div class="title-block">
+          <div class="title-de">VERPACKUNGSVORSCHRIFT</div>
+          <div class="title-en">packaging sheet</div>
+        </div>
+        <div class="brand">Hörmann</div>
+      </header>
+
+      <section class="panel">
+        <h2>Host Approval Queue</h2>
+        <div id="pendingList" class="pending-list"></div>
+      </section>
+      <div class="status" id="statusText"></div>
+    </div>
+
+    <script>
+      const pendingList = document.getElementById("pendingList");
+      const statusText = document.getElementById("statusText");
+      const STORAGE_APPROVED = "supplierLabelApproved";
+      const STORAGE_PENDING = "supplierLabelPending";
+
+      const loadApproved = () => {
+        const stored = localStorage.getItem(STORAGE_APPROVED);
+        return stored ? JSON.parse(stored) : {};
+      };
+
+      const saveApproved = (data) => {
+        localStorage.setItem(STORAGE_APPROVED, JSON.stringify(data));
+      };
+
+      const loadPending = () => {
+        const stored = localStorage.getItem(STORAGE_PENDING);
+        return stored ? JSON.parse(stored) : [];
+      };
+
+      const savePending = (pending) => {
+        localStorage.setItem(STORAGE_PENDING, JSON.stringify(pending));
+      };
+
+      const buildDiff = (current, proposed) => {
+        const changes = [];
+        const keys = Object.keys(proposed || {});
+        keys.forEach((key) => {
+          const oldValue = current[key] || "";
+          const newValue = proposed[key] || "";
+          if (oldValue !== newValue) {
+            changes.push({ key, oldValue, newValue });
+          }
+        });
+        return changes;
+      };
+
+      const renderPending = async () => {
+        const pending = loadPending();
+        const current = loadApproved();
+        pendingList.innerHTML = "";
+        if (!pending.length) {
+          pendingList.textContent = "No pending requests.";
+          statusText.textContent = "";
+          return;
+        }
+        pending.forEach((item) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "pending-card";
+          const header = document.createElement("div");
+          header.className = "pending-header";
+          header.textContent = `${item.id} - ${item.guest.name} ${item.guest.surname} (${item.guest.email})`;
+          const supplier = document.createElement("div");
+          supplier.className = "pending-supplier";
+          supplier.textContent = `Supplier: ${item.guest.supplier}`;
+          const dateLine = document.createElement("div");
+          dateLine.className = "pending-date";
+          const created = item.created_at ? new Date(item.created_at) : null;
+          dateLine.textContent = created
+            ? `Requested: ${created.toLocaleString()}`
+            : "Requested: unknown";
+          const changes = buildDiff(current, item.fields);
+          const labels = item.labels || {};
+          const changeList = document.createElement("ul");
+          changeList.className = "change-list";
+          if (!changes.length) {
+            const none = document.createElement("li");
+            none.textContent = "No changes detected.";
+            changeList.appendChild(none);
+          } else {
+            changes.forEach((change) => {
+              const li = document.createElement("li");
+              const label = labels[change.key] || change.key;
+              li.textContent = `${label}: "${change.oldValue}" -> "${change.newValue}"`;
+              changeList.appendChild(li);
+            });
+          }
+          const actions = document.createElement("div");
+          actions.className = "pending-actions";
+          const approve = document.createElement("button");
+          approve.textContent = "Approve";
+          approve.addEventListener("click", () =>
+            handleApproval(item.id, "approve")
+          );
+          const reject = document.createElement("button");
+          reject.textContent = "Reject";
+          reject.addEventListener("click", () =>
+            handleApproval(item.id, "reject")
+          );
+          actions.appendChild(approve);
+          actions.appendChild(reject);
+          wrapper.appendChild(header);
+          wrapper.appendChild(supplier);
+          wrapper.appendChild(dateLine);
+          wrapper.appendChild(changeList);
+          wrapper.appendChild(actions);
+          pendingList.appendChild(wrapper);
+        });
+        statusText.textContent = "Pending requests loaded.";
+      };
+
+      const handleApproval = async (id, action) => {
+        const pending = loadPending();
+        const match = pending.find((item) => item.id === id);
+        if (!match) {
+          return;
+        }
+        const remaining = pending.filter((item) => item.id !== id);
+        savePending(remaining);
+        if (action === "approve") {
+          saveApproved(match.fields);
+        }
+        await renderPending();
+      };
+
+      renderPending();
+    </script>
+  </body>
+</html>

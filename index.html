@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Supplier Label - Packaging Sheet</title>
+    <style>
+      :root {
+        --blue: #0b6db3;
+        --blue-dark: #064c7b;
+        --yellow: #fff7a8;
+        --grid: #d3d7db;
+        --ink: #111111;
+        --paper: #f6f7f8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Franklin Gothic Medium", "Segoe UI", sans-serif;
+        background: radial-gradient(
+          circle at top left,
+          #fefefe,
+          #e8eef5 60%,
+          #dee7ef
+        );
+        color: var(--ink);
+      }
+
+      .sheet {
+        max-width: 1200px;
+        margin: 24px auto 40px;
+        border: 6px solid var(--blue);
+        background: var(--paper);
+        box-shadow: 0 20px 50px rgba(6, 30, 60, 0.18);
+      }
+
+      .sheet-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: stretch;
+        border-bottom: 4px solid var(--blue);
+        background: linear-gradient(
+          90deg,
+          var(--blue) 0%,
+          #0f7ecc 70%,
+          #0f7ecc 100%
+        );
+      }
+
+      .title-block {
+        padding: 16px 20px;
+        color: white;
+        letter-spacing: 0.5px;
+      }
+
+      .title-de {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      .title-en {
+        font-size: 16px;
+        text-transform: lowercase;
+      }
+
+      .brand {
+        min-width: 200px;
+        background: white;
+        color: #111;
+        font-size: 32px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-left: 4px solid var(--blue-dark);
+        letter-spacing: 2px;
+      }
+
+      .top-grid,
+      .bottom-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        padding: 16px 18px 20px;
+      }
+
+      .bottom-grid {
+        padding-top: 6px;
+      }
+
+      .panel {
+        border: 3px solid var(--blue);
+        background: white;
+      }
+
+      .panel h2 {
+        margin: 0;
+        padding: 6px 10px;
+        font-size: 16px;
+        background: var(--blue);
+        color: white;
+      }
+
+      .subheading {
+        background: #e3e3e3;
+        padding: 6px 10px;
+        font-weight: 600;
+        border-bottom: 2px solid var(--blue);
+      }
+
+      .field-grid {
+        display: grid;
+        grid-template-columns: 1fr 2.3fr;
+        gap: 2px;
+        padding: 6px;
+        background: var(--blue);
+      }
+
+      .field-grid label {
+        background: var(--yellow);
+        padding: 6px 8px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+
+      .field-grid label span {
+        display: block;
+        font-weight: 500;
+      }
+
+      .field-grid input,
+      .field-grid textarea,
+      .field-grid select {
+        border: 2px solid var(--blue);
+        padding: 6px 8px;
+        font-size: 12px;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        background: white;
+        width: 100%;
+      }
+
+      .field-grid input:disabled,
+      .field-grid textarea:disabled,
+      .field-grid select:disabled {
+        background: #edf1f5;
+        color: #5d6a75;
+      }
+
+      .field-grid textarea {
+        resize: vertical;
+      }
+
+      .two-line {
+        line-height: 1.1;
+      }
+
+      .split-input {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+      }
+
+      .split-input input {
+        border: 2px solid var(--blue);
+      }
+
+      .divider {
+        background: white;
+        border: 2px solid var(--blue);
+        min-height: 10px;
+      }
+
+      .photo-area {
+        position: relative;
+        min-height: 380px;
+        border: 2px solid var(--blue);
+        margin: 8px;
+        background-image: linear-gradient(#d5d5d5 1px, transparent 1px),
+          linear-gradient(90deg, #d5d5d5 1px, transparent 1px);
+        background-size: 24px 24px;
+        overflow: hidden;
+      }
+
+      .photo-area.dragging {
+        border-color: #ff9d2e;
+        box-shadow: inset 0 0 0 3px rgba(255, 157, 46, 0.4);
+      }
+
+      .photo-area.has-image {
+        background-size: cover;
+        background-position: center;
+      }
+
+      .photo-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.6);
+        font-weight: 600;
+      }
+
+      .photo-overlay input[type="file"] {
+        font-size: 12px;
+        background: white;
+        border: 2px dashed var(--blue);
+        padding: 6px;
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 18px 18px;
+      }
+
+      #saveButton {
+        background: var(--blue);
+        color: white;
+        border: 2px solid var(--blue-dark);
+        font-size: 14px;
+        font-weight: 700;
+        padding: 8px 18px;
+        cursor: pointer;
+      }
+
+      #saveButton:hover {
+        filter: brightness(0.95);
+      }
+
+      #saveStatus {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--blue-dark);
+      }
+
+      .admin-panel {
+        margin: 0 18px 18px;
+        border: 3px solid var(--blue);
+        background: #ffffff;
+      }
+
+      .admin-panel h2 {
+        margin: 0;
+        padding: 8px 12px;
+        background: var(--blue-dark);
+        color: white;
+        font-size: 16px;
+      }
+
+      .pending-list {
+        padding: 12px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .pending-card {
+        border: 2px solid var(--blue);
+        padding: 10px;
+        background: #f3f8fd;
+      }
+
+      .pending-header {
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .pending-supplier {
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+
+      .change-list {
+        margin: 0 0 8px;
+        padding-left: 16px;
+        font-size: 12px;
+      }
+
+      .pending-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .pending-actions button {
+        border: 2px solid var(--blue-dark);
+        background: white;
+        padding: 6px 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .pending-actions button:first-child {
+        background: var(--blue);
+        color: white;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 20, 40, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      .modal[hidden] {
+        display: none;
+      }
+
+      .modal-card {
+        background: white;
+        border: 3px solid var(--blue);
+        padding: 16px;
+        width: min(420px, 90vw);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .modal-card h3 {
+        margin-top: 0;
+      }
+
+      .modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 8px;
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+
+      .modal-grid input {
+        border: 2px solid var(--blue);
+        padding: 6px 8px;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .modal-actions button {
+        border: 2px solid var(--blue-dark);
+        padding: 6px 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      #guestSubmit {
+        background: var(--blue);
+        color: white;
+      }
+
+      .modal-status {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #b23b00;
+      }
+
+      @media (max-width: 980px) {
+        .top-grid,
+        .bottom-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .brand {
+          font-size: 24px;
+          min-width: 140px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <header class="sheet-header">
+        <div class="title-block">
+          <div class="title-de">VERPACKUNGSVORSCHRIFT</div>
+          <div class="title-en">packaging sheet</div>
+        </div>
+        <div class="brand">Hörmann</div>
+      </header>
+
+      <section class="top-grid">
+        <div class="panel">
+          <h2>Lieferantendaten / supplier data</h2>
+          <div class="field-grid">
+            <label>Lieferant:<span>supplier name:</span></label>
+            <input type="text" data-key="supplierName" data-label="Supplier name" value="Example Supplier GmbH" />
+
+            <label>Lieferanten-Nr:<span>supplier-no.:</span></label>
+            <input type="text" data-key="supplierNumber" data-label="Supplier number" value="SUP-1048" />
+
+            <label>Lieferanten-Adresse:<span>supplier address:</span></label>
+            <input type="text" data-key="supplierAddress" data-label="Supplier address" value="Werkstrasse 12, 12345 Musterstadt" />
+
+            <label>Ansprechpartner:<span>contact person:</span></label>
+            <input type="text" data-key="contactPerson" data-label="Contact person" value="Maria Keller" />
+
+            <label>E-Mail:</label>
+            <input type="email" data-key="contactEmail" data-label="Email" value="m.keller@example.com" />
+
+            <label>Versandart:</label>
+            <input type="text" data-key="shippingMethod" data-label="Shipping method" value="Truck / LKW" />
+
+            <label class="two-line">Verpackungswunschmaterial:<span>packaging material:</span></label>
+            <div class="split-input">
+              <input type="text" data-key="packagingMaterialProduct" data-label="Packaging material product" value="Produkt" />
+              <input type="text" data-key="packagingMaterialContainer" data-label="Packaging material container" value="Gebinde" />
+            </div>
+
+            <label>Jahresmenge</label>
+            <input type="text" data-key="annualVolume" data-label="Annual volume" value="28.000" />
+
+            <label>Losgroesse</label>
+            <input type="text" data-key="batchSize" data-label="Batch size" value="1.200" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Artikeldaten / Article data</h2>
+          <div class="field-grid">
+            <label>ASTE Nummer:<span>ASTE number:</span></label>
+            <input type="text" data-key="asteNumber" data-label="ASTE number" value="ASTE-7782" />
+
+            <label>Bauteilbezeichnung:<span>part name:</span></label>
+            <input type="text" data-key="partName" data-label="Part name" value="Door Frame Assembly" />
+
+            <label>SAP Nummer:<span>SAP number:</span></label>
+            <input type="text" data-key="sapNumber" data-label="SAP number" value="SAP-402188" />
+
+            <label>Abmessungen:<span>dimensions:</span></label>
+            <input type="text" data-key="dimensions" data-label="Dimensions" value="980 x 140 x 35 mm" />
+
+            <label>Gewicht:<span>weight:</span></label>
+            <input type="text" data-key="weight" data-label="Weight" value="3.6 kg" />
+
+            <label class="two-line">Bemerkungen:<span>remarks:</span></label>
+            <textarea rows="4" data-key="remarks" data-label="Remarks">Protected edges, no oil residue.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <div class="panel">
+          <h2>Verpackungsphoto / Photo of packaging:</h2>
+          <div class="photo-area" id="photoArea">
+            <div class="photo-overlay">
+              <span>Drop photo or choose file</span>
+              <input type="file" id="photoInput" accept="image/*" />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Verpackungsdaten / Packaging Data:</h2>
+          <div class="subheading">Mehrwegverpackung / Returnable packaging:</div>
+          <div class="field-grid">
+            <label>Palette</label>
+            <select data-key="palletType" data-label="Pallet type">
+              <option>EUR-EPAL 1</option>
+              <option>EUR-EPAL 2</option>
+              <option>EUR-EPAL 6</option>
+              <option>Einweg</option>
+              <option>China</option>
+              <option>USA</option>
+            </select>
+
+            <label>Menge pro Buendel / Quantity per batch:</label>
+            <input type="text" data-key="quantityPerBatch" data-label="Quantity per batch" value="24" />
+
+            <label>Primaerverpackung</label>
+            <input type="text" data-key="primaryPackaging" data-label="Primary packaging" value="Corrugated insert" />
+
+            <label>Menge pro VPE / Quantity per VPE:</label>
+            <input type="text" data-key="quantityPerVpe" data-label="Quantity per VPE" value="6" />
+
+            <label>Sekundaerverpackung</label>
+            <input type="text" data-key="secondaryPackaging" data-label="Secondary packaging" value="Box type B" />
+
+            <label>Menge pro LDE / Quantity per LDE:</label>
+            <input type="text" data-key="quantityPerLde" data-label="Quantity per LDE" value="48" />
+
+            <label>Tertiaerverpackung</label>
+            <input type="text" data-key="tertiaryPackaging" data-label="Tertiary packaging" value="Stretch hood" />
+
+            <label>Umreifungsband</label>
+            <select data-key="strapping" data-label="Strapping">
+              <option>JA</option>
+              <option>NEIN</option>
+            </select>
+
+            <label>Stretchfolie</label>
+            <select data-key="stretchFilm" data-label="Stretch film">
+              <option>JA</option>
+              <option>NEIN</option>
+            </select>
+
+            <label>Gewicht- und Masseangaben / Data weight and dimensions:</label>
+            <div class="divider"></div>
+
+            <label>Laenge / Length (cm)</label>
+            <input type="text" data-key="length" data-label="Length (cm)" value="120" />
+
+            <label>Breite / Width (cm)</label>
+            <input type="text" data-key="width" data-label="Width (cm)" value="80" />
+
+            <label>Hoehe / Height (cm)</label>
+            <input type="text" data-key="height" data-label="Height (cm)" value="95" />
+
+            <label>Netto-Gewicht / Tare weight (kg):</label>
+            <input type="text" data-key="tareWeight" data-label="Tare weight (kg)" value="18" />
+
+            <label>Teile-Gewicht / Piece weight (kg):</label>
+            <input type="text" data-key="pieceWeight" data-label="Piece weight (kg)" value="3.6" />
+
+            <label>Brutto-Gewicht / Gross weight (kg):</label>
+            <input type="text" data-key="grossWeight" data-label="Gross weight (kg)" value="104" />
+          </div>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="button" id="saveButton">Request edit access</button>
+        <span id="saveStatus" aria-live="polite"></span>
+      </div>
+
+      <section class="admin-panel" id="adminPanel" hidden>
+        <h2>Host Approval Queue</h2>
+        <div id="pendingList" class="pending-list"></div>
+      </section>
+    </div>
+
+    <div class="modal" id="guestModal" hidden>
+      <div class="modal-card">
+        <h3>Guest data required</h3>
+        <div class="modal-grid">
+          <label>Name</label>
+          <input type="text" id="guestName" />
+          <label>Surname</label>
+          <input type="text" id="guestSurname" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="guestCancel">Cancel</button>
+          <button type="button" id="guestSubmit">Submit request</button>
+        </div>
+        <div class="modal-status" id="guestStatus"></div>
+      </div>
+    </div>
+
+    <script>
+      const photoInput = document.getElementById("photoInput");
+      const photoArea = document.getElementById("photoArea");
+      const saveButton = document.getElementById("saveButton");
+      const saveStatus = document.getElementById("saveStatus");
+      const guestModal = document.getElementById("guestModal");
+      const guestCancel = document.getElementById("guestCancel");
+      const guestSubmit = document.getElementById("guestSubmit");
+      const guestStatus = document.getElementById("guestStatus");
+      const adminPanel = document.getElementById("adminPanel");
+      const pendingList = document.getElementById("pendingList");
+      const guestInputs = {
+        name: document.getElementById("guestName"),
+        surname: document.getElementById("guestSurname"),
+      };
+      const inputFields = Array.from(
+        document.querySelectorAll("input[data-key], textarea[data-key], select[data-key]")
+      );
+      let guestData = null;
+      let isLocked = true;
+      const STORAGE_APPROVED = "supplierLabelApproved";
+      const STORAGE_PENDING = "supplierLabelPending";
+
+      const loadImage = (file) => {
+        if (!file || !file.type.startsWith("image/")) {
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          photoArea.style.backgroundImage = `url("${event.target.result}")`;
+          photoArea.classList.add("has-image");
+        };
+        reader.readAsDataURL(file);
+      };
+
+      photoInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        loadImage(file);
+      });
+
+      photoArea.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        photoArea.classList.add("dragging");
+      });
+
+      photoArea.addEventListener("dragleave", () => {
+        photoArea.classList.remove("dragging");
+      });
+
+      photoArea.addEventListener("drop", (event) => {
+        event.preventDefault();
+        photoArea.classList.remove("dragging");
+        const file = event.dataTransfer.files[0];
+        loadImage(file);
+      });
+
+      const getFormData = () => {
+        const data = {};
+        inputFields.forEach((field) => {
+          data[field.dataset.key] = field.value;
+        });
+        return data;
+      };
+
+      const getLabelMap = () => {
+        const labels = {};
+        inputFields.forEach((field) => {
+          labels[field.dataset.key] = field.dataset.label || field.dataset.key;
+        });
+        return labels;
+      };
+
+      const applyFormData = (data) => {
+        inputFields.forEach((field) => {
+          const value = data[field.dataset.key];
+          if (value !== undefined) {
+            field.value = value;
+          }
+        });
+      };
+
+      const loadApproved = () => {
+        const stored = localStorage.getItem(STORAGE_APPROVED);
+        return stored ? JSON.parse(stored) : {};
+      };
+
+      const saveApproved = (data) => {
+        localStorage.setItem(STORAGE_APPROVED, JSON.stringify(data));
+      };
+
+      const loadPending = () => {
+        const stored = localStorage.getItem(STORAGE_PENDING);
+        return stored ? JSON.parse(stored) : [];
+      };
+
+      const savePending = (pending) => {
+        localStorage.setItem(STORAGE_PENDING, JSON.stringify(pending));
+      };
+
+      const setLocked = (locked) => {
+        isLocked = locked;
+        inputFields.forEach((field) => {
+          field.disabled = locked;
+        });
+        saveButton.textContent = locked
+          ? "Request edit access"
+          : "Submit change request";
+      };
+
+      const showModal = () => {
+        guestStatus.textContent = "";
+        guestModal.hidden = false;
+      };
+
+      const hideModal = () => {
+        guestModal.hidden = true;
+      };
+
+      const validateGuest = () => {
+        return Object.values(guestInputs).every((input) => input.value.trim());
+      };
+
+      const loadCurrentData = () => {
+        const data = loadApproved();
+        if (Object.keys(data).length) {
+          applyFormData(data);
+        }
+      };
+
+      const submitChangeRequest = async () => {
+        if (!guestData) {
+          setLocked(true);
+          saveStatus.textContent = "Request edit access first.";
+          return;
+        }
+        const pending = loadPending();
+        const id = `REQ-${String(pending.length + 1).padStart(4, "0")}`;
+        pending.push({
+          id,
+          guest: guestData,
+          fields: getFormData(),
+          labels: getLabelMap(),
+          created_at: new Date().toISOString(),
+        });
+        savePending(pending);
+        saveStatus.textContent = `Request sent (${id}).`;
+        setLocked(true);
+      };
+
+      const buildDiff = (current, proposed) => {
+        const changes = [];
+        inputFields.forEach((field) => {
+          const key = field.dataset.key;
+          const label = field.dataset.label || key;
+          const oldValue = current[key] || "";
+          const newValue = proposed[key] || "";
+          if (oldValue !== newValue) {
+            changes.push({ label, oldValue, newValue });
+          }
+        });
+        return changes;
+      };
+
+      const renderPending = async () => {
+        const pending = loadPending();
+        const current = loadApproved();
+        pendingList.innerHTML = "";
+        if (!pending.length) {
+          pendingList.textContent = "No pending requests.";
+          return;
+        }
+        pending.forEach((item) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "pending-card";
+          const header = document.createElement("div");
+          header.className = "pending-header";
+          header.textContent = `${item.id} - ${item.guest.name} ${item.guest.surname} (${item.guest.email})`;
+          const supplier = document.createElement("div");
+          supplier.className = "pending-supplier";
+          supplier.textContent = `Supplier: ${item.guest.supplier}`;
+          const changes = buildDiff(current, item.fields);
+          const changeList = document.createElement("ul");
+          changeList.className = "change-list";
+          if (!changes.length) {
+            const none = document.createElement("li");
+            none.textContent = "No changes detected.";
+            changeList.appendChild(none);
+          } else {
+            changes.forEach((change) => {
+              const li = document.createElement("li");
+              li.textContent = `${change.label}: "${change.oldValue}" -> "${change.newValue}"`;
+              changeList.appendChild(li);
+            });
+          }
+          const actions = document.createElement("div");
+          actions.className = "pending-actions";
+          const approve = document.createElement("button");
+          approve.textContent = "Approve";
+          approve.addEventListener("click", () =>
+            handleApproval(item.id, "approve")
+          );
+          const reject = document.createElement("button");
+          reject.textContent = "Reject";
+          reject.addEventListener("click", () =>
+            handleApproval(item.id, "reject")
+          );
+          actions.appendChild(approve);
+          actions.appendChild(reject);
+          wrapper.appendChild(header);
+          wrapper.appendChild(supplier);
+          wrapper.appendChild(changeList);
+          wrapper.appendChild(actions);
+          pendingList.appendChild(wrapper);
+        });
+      };
+
+      const handleApproval = async (id, action) => {
+        const pending = loadPending();
+        const match = pending.find((item) => item.id === id);
+        if (!match) {
+          return;
+        }
+        const remaining = pending.filter((item) => item.id !== id);
+        savePending(remaining);
+        if (action === "approve") {
+          saveApproved(match.fields);
+          loadCurrentData();
+        }
+        renderPending();
+      };
+
+      saveButton.addEventListener("click", () => {
+        if (isLocked) {
+          showModal();
+          return;
+        }
+        submitChangeRequest();
+      });
+
+      guestCancel.addEventListener("click", () => {
+        hideModal();
+        guestStatus.textContent = "";
+      });
+
+      guestModal.addEventListener("click", (event) => {
+        if (event.target === guestModal) {
+          hideModal();
+          guestStatus.textContent = "";
+        }
+      });
+      guestSubmit.addEventListener("click", () => {
+        if (!validateGuest()) {
+          guestStatus.textContent = "Please fill all guest fields.";
+          return;
+        }
+        const supplierField = document.querySelector("[data-key='supplierName']");
+        const emailField = document.querySelector("[data-key='contactEmail']");
+        guestData = {
+          name: guestInputs.name.value.trim(),
+          surname: guestInputs.surname.value.trim(),
+          email: emailField ? emailField.value.trim() : "",
+          supplier: supplierField ? supplierField.value.trim() : "",
+        };
+        setLocked(false);
+        saveStatus.textContent = "Edit access granted. Make changes, then submit.";
+        hideModal();
+      });
+
+      loadCurrentData();
+      setLocked(true);
+      if (window.location.search.includes("admin=1")) {
+        adminPanel.hidden = false;
+        renderPending();
+      }
+    </script>
+  </body>
+</html>
