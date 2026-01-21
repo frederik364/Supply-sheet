@@ -686,23 +686,14 @@
         }
       };
 
-      const submitChangeRequest = async () => {
+      const submitChangeRequest = () => {
         if (!guestData) {
           setLocked(true);
           saveStatus.textContent = "Request edit access first.";
           return;
         }
-        const pending = loadPending();
-        const id = `REQ-${String(pending.length + 1).padStart(4, "0")}`;
-        pending.push({
-          id,
-          guest: guestData,
-          fields: getFormData(),
-          labels: getLabelMap(),
-          created_at: new Date().toISOString(),
-        });
-        savePending(pending);
-        saveStatus.textContent = `Request sent (${id}).`;
+        sendRequest(getFormData(), guestData);
+        saveStatus.textContent = "Request sent.";
         setLocked(true);
       };
 
@@ -831,6 +822,22 @@
         adminPanel.hidden = false;
         renderPending();
       }
+    </script>
+
+    <script type="module">
+      const pendingRef = dbRef(window.db, "pending");
+
+      window.sendRequest = function (formData, guestData) {
+        window
+          .dbPush(pendingRef, {
+            fields: formData,
+            guest: guestData,
+            created_at: new Date().toISOString(),
+          })
+          .then(() => {
+            alert("Request erfolgreich gesendet!");
+          });
+      };
     </script>
   </body>
 </html>
