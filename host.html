@@ -170,26 +170,7 @@
     <script>
       const pendingList = document.getElementById("pendingList");
       const statusText = document.getElementById("statusText");
-      const STORAGE_APPROVED = "supplierLabelApproved";
-      const STORAGE_PENDING = "supplierLabelPending";
-
-      const loadApproved = () => {
-        const stored = localStorage.getItem(STORAGE_APPROVED);
-        return stored ? JSON.parse(stored) : {};
-      };
-
-      const saveApproved = (data) => {
-        localStorage.setItem(STORAGE_APPROVED, JSON.stringify(data));
-      };
-
-      const loadPending = () => {
-        const stored = localStorage.getItem(STORAGE_PENDING);
-        return stored ? JSON.parse(stored) : [];
-      };
-
-      const savePending = (pending) => {
-        localStorage.setItem(STORAGE_PENDING, JSON.stringify(pending));
-      };
+      window.approvedCache = {};
 
       const buildDiff = (current, proposed) => {
         const changes = [];
@@ -204,31 +185,35 @@
         return changes;
       };
 
-      const renderPending = async () => {
-        const pending = loadPending();
-        const current = loadApproved();
+      const renderPendingFirebase = (data) => {
+        const current = window.approvedCache || {};
+        const entries = Object.entries(data || {});
         pendingList.innerHTML = "";
-        if (!pending.length) {
+        if (!entries.length) {
           pendingList.textContent = "No pending requests.";
           statusText.textContent = "";
           return;
         }
-        pending.forEach((item) => {
+        entries.forEach(([id, item]) => {
+          if (!item) {
+            return;
+          }
           const wrapper = document.createElement("div");
           wrapper.className = "pending-card";
           const header = document.createElement("div");
           header.className = "pending-header";
-          header.textContent = `${item.id} - ${item.guest.name} ${item.guest.surname} (${item.guest.email})`;
+          const guest = item.guest || {};
+          header.textContent = `${id} - ${guest.name || ""} ${guest.surname || ""} (${guest.email || ""})`;
           const supplier = document.createElement("div");
           supplier.className = "pending-supplier";
-          supplier.textContent = `Supplier: ${item.guest.supplier}`;
+          supplier.textContent = `Supplier: ${guest.supplier || ""}`;
           const dateLine = document.createElement("div");
           dateLine.className = "pending-date";
           const created = item.created_at ? new Date(item.created_at) : null;
           dateLine.textContent = created
             ? `Requested: ${created.toLocaleString()}`
             : "Requested: unknown";
-          const changes = buildDiff(current, item.fields);
+          const changes = buildDiff(current, item.fields || {});
           const labels = item.labels || {};
           const changeList = document.createElement("ul");
           changeList.className = "change-list";
@@ -249,12 +234,12 @@
           const approve = document.createElement("button");
           approve.textContent = "Approve";
           approve.addEventListener("click", () =>
-            handleApproval(item.id, "approve")
+            window.approveRequest(id, item)
           );
           const reject = document.createElement("button");
           reject.textContent = "Reject";
           reject.addEventListener("click", () =>
-            handleApproval(item.id, "reject")
+            window.rejectRequest(id)
           );
           actions.appendChild(approve);
           actions.appendChild(reject);
@@ -267,22 +252,31 @@
         });
         statusText.textContent = "Pending requests loaded.";
       };
+    </script>
 
-      const handleApproval = async (id, action) => {
-        const pending = loadPending();
-        const match = pending.find((item) => item.id === id);
-        if (!match) {
-          return;
-        }
-        const remaining = pending.filter((item) => item.id !== id);
-        savePending(remaining);
-        if (action === "approve") {
-          saveApproved(match.fields);
-        }
-        await renderPending();
+    <script type="module">
+      const pendingRef = dbRef(window.db, "pending");
+      const approvedRef = dbRef(window.db, "approved");
+
+      window.dbOnValue(approvedRef, (snapshot) => {
+        window.approvedCache = snapshot.val() || {};
+      });
+
+      window.dbOnValue(pendingRef, (snapshot) => {
+        const data = snapshot.val() || {};
+        renderPendingFirebase(data);
+      });
+
+      window.approveRequest = function (id, item) {
+        window.dbSet(dbRef(window.db, "approved"), item.fields || {});
+        window.dbRemove(dbRef(window.db, "pending/" + id));
+        alert("Approved!");
       };
 
-      renderPending();
+      window.rejectRequest = function (id) {
+        window.dbRemove(dbRef(window.db, "pending/" + id));
+        alert("Rejected.");
+      };
     </script>
   </body>
 </html>
